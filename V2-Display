@@ -1,0 +1,81 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Servo.h>
+
+// OLED display configuration
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET    -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// Define the pins
+const int joystickXPin = 26; // GP26 (ADC0)
+const int joystickYPin = 27; // GP27 (ADC1)
+const int joystickSWPin = 15; // GP15 (Button)
+const int servoPin = 0; // GP0 for the servo
+
+Servo myservo; // create servo object to control a servo
+
+void setup() {
+  // Initialize the servo
+  myservo.attach(servoPin);
+
+  // Initialize the joystick button pin as input
+  pinMode(joystickSWPin, INPUT_PULLUP);
+
+  // Start serial communication for debugging
+  Serial.begin(9600);
+
+
+  // Initialize the OLED display with the I2C address 0x3C
+ if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  display.clearDisplay();
+  display.display();
+}
+
+void loop() {
+  // Read the joystick values
+  int xValue = analogRead(joystickXPin);
+  int yValue = analogRead(joystickYPin);
+  int buttonState = digitalRead(joystickSWPin);
+
+  // Map the joystick X value to servo position (0 to 180)
+  int servoPos = map(xValue, 0, 4095, 0, 180);
+  myservo.write(servoPos);
+
+  // Display the values on the OLED
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+
+  display.print("X: ");
+  display.print(xValue);
+  display.print(" Y: ");
+  display.print(yValue);
+  display.setCursor(0, 16);
+  display.print("Servo: ");
+  display.print(servoPos);
+  display.setCursor(0, 32);
+  display.print("Button: ");
+  display.print(buttonState);
+
+  display.display();
+
+  // Print values to serial monitor for debugging
+  Serial.print("X: ");
+  Serial.print(xValue);
+  Serial.print(" Y: ");
+  Serial.print(yValue);
+  Serial.print(" Servo: ");
+  Serial.print(servoPos);
+  Serial.print(" Button: ");
+  Serial.println(buttonState);
+
+  // Small delay for stability
+  delay(100);
+}
